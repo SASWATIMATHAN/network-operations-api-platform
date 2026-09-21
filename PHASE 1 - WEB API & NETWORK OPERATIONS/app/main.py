@@ -26,6 +26,22 @@ class DeviceResponse(BaseModel):
     management_ip: str = Field(description="Management IPv4 address")
     status: str = Field(description="Current operational status")
 
+class InterfaceResponse(BaseModel):
+    interface_name: str = Field(
+        description="Network interface name"
+    )
+    ip_address: str = Field(
+        description="Interface IPv4 address"
+    )
+    subnet_mask: str = Field(
+        description="Interface subnet mask"
+    )
+    status: str = Field(
+        description="Interface operational status"
+    )
+    description: str = Field(
+        description="Interface description"
+    )
 
 devices = [
     {
@@ -58,7 +74,58 @@ devices = [
     }
 ]
 
-
+interfaces = {
+    "R1": [
+        {
+            "interface_name": "FastEthernet0/0",
+            "ip_address": "192.168.40.10",
+            "subnet_mask": "255.255.255.0",
+            "status": "up",
+            "description": "Management interface"
+        },
+        {
+            "interface_name": "FastEthernet0/1",
+            "ip_address": "10.10.10.1",
+            "subnet_mask": "255.255.255.252",
+            "status": "up",
+            "description": "WAN link to R2"
+        }
+    ],
+    "R2": [
+        {
+            "interface_name": "FastEthernet0/0",
+            "ip_address": "192.168.40.11",
+            "subnet_mask": "255.255.255.0",
+            "status": "up",
+            "description": "Management interface"
+        },
+        {
+            "interface_name": "FastEthernet0/1",
+            "ip_address": "10.10.10.2",
+            "subnet_mask": "255.255.255.252",
+            "status": "up",
+            "description": "WAN link to R1"
+        }
+    ],
+    "R3": [
+        {
+            "interface_name": "FastEthernet0/0",
+            "ip_address": "192.168.40.12",
+            "subnet_mask": "255.255.255.0",
+            "status": "down",
+            "description": "Management interface"
+        }
+    ],
+    "SW1": [
+        {
+            "interface_name": "FastEthernet0/1",
+            "ip_address": "192.168.40.20",
+            "subnet_mask": "255.255.255.0",
+            "status": "up",
+            "description": "Management interface"
+        }
+    ]
+}
 @app.get(
     "/",
     tags=["System"],
@@ -131,3 +198,22 @@ def list_devices(
         ]
 
     return filtered_devices
+@app.get(
+    "/devices/{device_id}/interfaces",
+    response_model=list[InterfaceResponse],
+    tags=["Devices"],
+    summary="Get network device interfaces"
+)
+def get_device_interfaces(device_id: str):
+    device_exists = any(
+        device["device_id"].lower() == device_id.lower()
+        for device in devices
+    )
+
+    if not device_exists:
+        raise HTTPException(
+            status_code=404,
+            detail=f"Device '{device_id}' not found"
+        )
+
+    return interfaces.get(device_id.upper(), [])
