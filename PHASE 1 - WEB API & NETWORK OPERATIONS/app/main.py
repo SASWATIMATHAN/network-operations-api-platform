@@ -18,6 +18,25 @@ app = FastAPI(
     ]
 )
 
+class DeviceCreate(BaseModel):
+    device_id: str = Field(
+        min_length=2,
+        description="Unique device identifier"
+    )
+    hostname: str = Field(
+        min_length=2,
+        description="Network device hostname"
+    )
+    device_type: str = Field(
+        description="Type of network device, e.g. router or switch"
+    )
+    management_ip: str = Field(
+        description="Management IPv4 address"
+    )
+    status: str = Field(
+        description="Initial operational status"
+    )
+
 
 class DeviceResponse(BaseModel):
     device_id: str = Field(description="Unique device identifier")
@@ -217,3 +236,22 @@ def get_device_interfaces(device_id: str):
         )
 
     return interfaces.get(device_id.upper(), [])
+@app.post(
+    "/devices",
+    response_model=DeviceResponse,
+    status_code=201,
+    tags=["Devices"],
+    summary="Create a new network device"
+)
+def create_device(device: DeviceCreate):
+    for existing_device in devices:
+        if existing_device["device_id"].lower() == device.device_id.lower():
+            raise HTTPException(
+                status_code=409,
+                detail=f"Device '{device.device_id}' already exists"
+            )
+
+    new_device = device.model_dump()
+    devices.append(new_device)
+
+    return new_device
