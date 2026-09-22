@@ -37,6 +37,20 @@ class DeviceCreate(BaseModel):
         description="Initial operational status"
     )
 
+class DeviceUpdate(BaseModel):
+    hostname: str = Field(
+        min_length=2,
+        description="Network device hostname"
+    )
+    device_type: str = Field(
+        description="Type of network device, e.g. router or switch"
+    )
+    management_ip: str = Field(
+        description="Management IPv4 address"
+    )
+    status: str = Field(
+        description="Current operational status"
+    )
 
 class DeviceResponse(BaseModel):
     device_id: str = Field(description="Unique device identifier")
@@ -255,3 +269,39 @@ def create_device(device: DeviceCreate):
     devices.append(new_device)
 
     return new_device
+@app.put(
+    "/devices/{device_id}",
+    response_model=DeviceResponse,
+    tags=["Devices"],
+    summary="Update an existing network device"
+)
+def update_device(device_id: str, device: DeviceUpdate):
+    for existing_device in devices:
+        if existing_device["device_id"].lower() == device_id.lower():
+            existing_device["hostname"] = device.hostname
+            existing_device["device_type"] = device.device_type
+            existing_device["management_ip"] = device.management_ip
+            existing_device["status"] = device.status
+
+            return existing_device
+
+    raise HTTPException(
+        status_code=404,
+        detail=f"Device '{device_id}' not found"
+    )
+@app.delete(
+    "/devices/{device_id}",
+    status_code=204,
+    tags=["Devices"],
+    summary="Delete a network device"
+)
+def delete_device(device_id: str):
+    for index, device in enumerate(devices):
+        if device["device_id"].lower() == device_id.lower():
+            devices.pop(index)
+            return
+
+    raise HTTPException(
+        status_code=404,
+        detail=f"Device '{device_id}' not found"
+    )
