@@ -1,6 +1,7 @@
 from fastapi import FastAPI, HTTPException, Query
 from pydantic import BaseModel, Field
-
+from ipaddress import IPv4Address
+from typing import Literal
 
 app = FastAPI(
     title="Network Operations API",
@@ -17,6 +18,9 @@ app = FastAPI(
         }
     ]
 )
+class ManagementInfo(BaseModel):
+    ip_address: IPv4Address
+    description: str | None = None
 
 class DeviceCreate(BaseModel):
     device_id: str = Field(
@@ -25,18 +29,22 @@ class DeviceCreate(BaseModel):
     )
     hostname: str = Field(
         min_length=2,
+        max_length=30,
         description="Network device hostname"
     )
-    device_type: str = Field(
-        description="Type of network device, e.g. router or switch"
+    device_type: Literal["router", "switch"] = Field(
+        description="Type of network device"
     )
-    management_ip: str = Field(
+    management_ip: IPv4Address = Field(
         description="Management IPv4 address"
     )
     status: str = Field(
         description="Initial operational status"
     )
-
+    description: str | None = Field(
+    default=None,
+    description="Optional device description"
+    )
 class DeviceUpdate(BaseModel):
     hostname: str = Field(
         min_length=2,
@@ -265,7 +273,7 @@ def create_device(device: DeviceCreate):
                 detail=f"Device '{device.device_id}' already exists"
             )
 
-    new_device = device.model_dump()
+    new_device = device.model_dump(mode="json")    
     devices.append(new_device)
 
     return new_device
