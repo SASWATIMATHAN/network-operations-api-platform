@@ -1,13 +1,6 @@
-from fastapi import FastAPI, HTTPException, Query, Request
-from fastapi.responses import JSONResponse
+from fastapi import FastAPI, HTTPException, Query
 from pydantic import BaseModel, Field
-from ipaddress import IPv4Address
-from typing import Literal
-import uuid
 
-from app.routers.network import router as network_router
-class ErrorResponse(BaseModel):
-    error: dict
 
 app = FastAPI(
     title="Network Operations API",
@@ -24,35 +17,12 @@ app = FastAPI(
         }
     ]
 )
-app.include_router(network_router)
-class ManagementInfo(BaseModel):
-    ip_address: IPv4Address
-    description: str | None = None
 
 class DeviceCreate(BaseModel):
     device_id: str = Field(
         min_length=2,
         description="Unique device identifier"
     )
-    hostname: str = Field(
-        min_length=2,
-        max_length=30,
-        description="Network device hostname"
-    )
-    device_type: Literal["router", "switch"] = Field(
-        description="Type of network device"
-    )
-    management_ip: IPv4Address = Field(
-        description="Management IPv4 address"
-    )
-    status: str = Field(
-        description="Initial operational status"
-    )
-    description: str | None = Field(
-    default=None,
-    description="Optional device description"
-    )
-class DeviceUpdate(BaseModel):
     hostname: str = Field(
         min_length=2,
         description="Network device hostname"
@@ -64,8 +34,9 @@ class DeviceUpdate(BaseModel):
         description="Management IPv4 address"
     )
     status: str = Field(
-        description="Current operational status"
+        description="Initial operational status"
     )
+
 
 class DeviceResponse(BaseModel):
     device_id: str = Field(description="Unique device identifier")
@@ -280,43 +251,7 @@ def create_device(device: DeviceCreate):
                 detail=f"Device '{device.device_id}' already exists"
             )
 
-    new_device = device.model_dump(mode="json")    
+    new_device = device.model_dump()
     devices.append(new_device)
 
     return new_device
-@app.put(
-    "/devices/{device_id}",
-    response_model=DeviceResponse,
-    tags=["Devices"],
-    summary="Update an existing network device"
-)
-def update_device(device_id: str, device: DeviceUpdate):
-    for existing_device in devices:
-        if existing_device["device_id"].lower() == device_id.lower():
-            existing_device["hostname"] = device.hostname
-            existing_device["device_type"] = device.device_type
-            existing_device["management_ip"] = device.management_ip
-            existing_device["status"] = device.status
-
-            return existing_device
-
-    raise HTTPException(
-        status_code=404,
-        detail=f"Device '{device_id}' not found"
-    )
-@app.delete(
-    "/devices/{device_id}",
-    status_code=204,
-    tags=["Devices"],
-    summary="Delete a network device"
-)
-def delete_device(device_id: str):
-    for index, device in enumerate(devices):
-        if device["device_id"].lower() == device_id.lower():
-            devices.pop(index)
-            return
-
-    raise HTTPException(
-        status_code=404,
-        detail=f"Device '{device_id}' not found"
-    )
