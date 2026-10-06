@@ -1,6 +1,6 @@
-from fastapi import APIRouter, HTTPException, status
+from fastapi import APIRouter, Depends, HTTPException, status
 
-from app.config import settings
+from app.dependencies import get_network_service
 from app.network.exceptions import NetworkOperationError
 from app.schemas.network import DeviceHealthResponse
 from app.services.network_service import NetworkService
@@ -12,15 +12,6 @@ router = APIRouter(
 )
 
 
-def get_network_service() -> NetworkService:
-    """Create a network service using application configuration."""
-
-    return NetworkService(
-        username=settings.network_username,
-        password=settings.network_password,
-    )
-
-
 @router.get(
     "/devices/{host}/health",
     response_model=DeviceHealthResponse,
@@ -30,10 +21,11 @@ def get_network_service() -> NetworkService:
         "retrieve live operational information."
     ),
 )
-def get_device_health(host: str) -> DeviceHealthResponse:
+def get_device_health(
+    host: str,
+    service: NetworkService = Depends(get_network_service),
+) -> DeviceHealthResponse:
     """Retrieve live health information from a network device."""
-
-    service = get_network_service()
 
     try:
         return service.get_device_health(host)
