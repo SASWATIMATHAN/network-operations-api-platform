@@ -37,6 +37,57 @@ class NetworkService:
             raw_output=result.output or "",
         )
 
+    def execute_command(
+        self,
+        host: str,
+        command: str,
+    ) -> NetworkResult:
+        """Execute a CLI command through the network service layer."""
+
+        start_time = perf_counter()
+
+        try:
+            output = self.adapter.execute_command(
+                host=host,
+                command=command,
+                connect_timeout=self.connect_timeout,
+                command_timeout=self.command_timeout,
+            )
+
+            duration_ms = (perf_counter() - start_time) * 1000
+
+            return NetworkResult(
+                success=True,
+                host=host,
+                operation=command,
+                output=output,
+                duration_ms=round(duration_ms, 2),
+            )
+
+        except NetworkConnectionError as exc:
+            duration_ms = (perf_counter() - start_time) * 1000
+
+            return NetworkResult(
+                success=False,
+                host=host,
+                operation=command,
+                duration_ms=round(duration_ms, 2),
+                error_type=type(exc).__name__,
+                error_message=str(exc),
+            )
+
+        except NetworkOperationError as exc:
+            duration_ms = (perf_counter() - start_time) * 1000
+
+            return NetworkResult(
+                success=False,
+                host=host,
+                operation=command,
+                duration_ms=round(duration_ms, 2),
+                error_type=type(exc).__name__,
+                error_message=str(exc),
+            )
+
     def _execute_health_check(self, host: str) -> NetworkResult:
         """Execute the underlying network health operation."""
 
