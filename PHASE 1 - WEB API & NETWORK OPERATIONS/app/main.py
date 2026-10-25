@@ -6,6 +6,7 @@ from typing import Literal
 import uuid
 
 from app.routers.network import router as network_router
+from app.routers.inventory import router as inventory_router
 from app.routers.operations import router as operations_router
 from app.routers.jobs import router as jobs_router
 from app.audit.router import router as audit_router
@@ -28,6 +29,7 @@ app = FastAPI(
     ]
 )
 app.include_router(network_router)
+app.include_router(inventory_router)
 app.include_router(operations_router)
 app.include_router(jobs_router)
 app.include_router(audit_router)
