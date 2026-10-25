@@ -1,0 +1,180 @@
+# Lab 10 — PostgreSQL Network Inventory & Persistent Operational State
+
+## 1. Overview
+
+This lab extends the Network Operations API Platform with PostgreSQL-backed network inventory and persistent operational records. Alembic manages database schema migrations, while SQLAlchemy provides the application’s database models and session configuration.
+
+The objective is to move beyond in-memory operational state toward persistent inventory, asynchronous job tracking, operation history, and audit records.
+
+**Current status:** Implementation in progress. Database migrations have been applied, but the complete API integration and end-to-end validation must still be verified.
+
+## 2. Objectives
+
+- Configure PostgreSQL connectivity for the network operations application.
+- Manage schema changes using Alembic migrations.
+- Define persistent models for network devices and interfaces.
+- Store network operation results and per-device execution details.
+- Persist asynchronous job status and operation audit records.
+- Establish a foundation for network configuration backup and integrity verification.
+- Generate reproducible experiment outputs and automated test evidence.
+
+## 3. Technology Stack
+
+| Component | Technology |
+|---|---|
+| Programming language | Python |
+| API framework | FastAPI |
+| Database | PostgreSQL |
+| ORM | SQLAlchemy |
+| Schema migrations | Alembic |
+| Network automation | Existing Netmiko-based network service |
+| Automated testing | pytest |
+| Data processing | Python, JSON, CSV |
+| Version control | Git and GitHub |
+| Execution environment | WSL Ubuntu |
+
+## 4. Project Structure
+
+```text
+LAB 10 - POSTGRESQL NETWORK INVENTORY & PERSISTENT OPERATIONAL STATE/
+├── README.md
+├── alembic.ini
+├── configs/
+│   └── lab10.env.example
+├── data/
+│   ├── raw/
+│   │   └── database_snapshot.json
+│   └── processed/
+│       ├── database_validation.json
+│       └── database_table_counts.csv
+├── experiments/
+│   ├── README.md
+│   └── lab10_database_inventory.py
+├── migrations/
+│   ├── README
+│   ├── env.py
+│   ├── script.py.mako
+│   └── versions/
+│       ├── 3b531f05c920_create_network_inventory_tables.py
+│       └── ace434e09df0_add_persistent_operations_jobs_audit_.py
+├── reports/
+│   └── LAB10_IMPLEMENTATION_REPORT.md
+├── screenshots/
+└── tests/
+    └── test_lab10_database_schema.py
+```
+
+The experiment outputs and test files shown above are generated when their respective scripts have been created and executed successfully. Empty directories do not appear in Git until they contain tracked files.
+
+## 5. Database Design
+
+The migrations define the following seven application tables:
+
+| Table | Purpose |
+|---|---|
+| `network_devices` | Persistent network device inventory |
+| `network_interfaces` | Interfaces associated with inventory devices |
+| `network_operations` | Operation metadata, status, timing, and aggregate results |
+| `network_operation_device_results` | Per-device operation outcomes and output |
+| `network_jobs` | Asynchronous job status and lifecycle timestamps |
+| `network_audit_records` | Persistent operation audit history |
+| `network_configuration_backups` | Captured configuration, checksum, and metadata |
+
+Foreign keys maintain relationships between operations, jobs, audit records, devices, interfaces, and backups. Actual behavior must be confirmed by the integration tests.
+
+## 6. Application Components
+
+The Phase 1 application contains the database connection module, SQLAlchemy models, inventory API, and changes to the audit service and job manager.
+
+The Phase 2 directory contains the Alembic configuration and migration revisions associated with the database schema.
+
+The application-level components and migrations exist, but their complete integration must be verified before the lab is considered finished.
+
+## 7. Configuration
+
+Database connection settings are supplied through environment variables:
+
+- `DB_HOST`
+- `DB_PORT`
+- `DB_NAME`
+- `DB_USER`
+- `DB_PASSWORD`
+
+Do not store actual passwords or device credentials in the README, configuration templates, Git history, or generated reports. The example environment file is a template, not a credential store.
+
+## 8. Database Migration Workflow
+
+Activate the existing Phase 1 virtual environment and configure the required database environment variables before running migration commands.
+
+From the Lab 10 directory:
+
+```bash
+alembic current
+alembic history
+```
+
+The reported current revision should match the latest intended migration. Apply migrations only after reviewing the current database state and the pending migration plan.
+
+## 9. Experiments and Data
+
+The database inventory experiment is intended to inspect the expected tables, capture row counts, and generate JSON and CSV evidence.
+
+Expected outputs include:
+
+- A raw database snapshot in `data/raw/`.
+- A processed validation summary in `data/processed/`.
+- A table-count CSV in `data/processed/`.
+
+These outputs must be generated by running the experiment against the configured PostgreSQL database. They must not be manually represented as successful experimental results.
+
+## 10. Automated Testing
+
+The test suite is intended to verify that the expected database tables exist and contain columns.
+
+Additional integration tests are required to establish that:
+
+1. Inventory records can be created, retrieved, and updated.
+2. Operation results persist in PostgreSQL.
+3. Job status and operation relationships remain consistent.
+4. Audit records survive application restarts.
+5. Configuration backups can be captured and retrieved with verified checksums.
+6. API failures are handled without corrupting persistent state.
+
+Tests requiring a live database must run against the configured PostgreSQL instance. Network-device integration tests additionally require reachable lab devices.
+
+## 11. Validation and Evidence
+
+Record the actual results after running the implementation and tests:
+
+| Validation item | Result |
+|---|---|
+| PostgreSQL connectivity | Pending final verification |
+| Alembic migration state | Migration previously applied; recheck before final validation |
+| Inventory API persistence | Pending |
+| Operation and device-result persistence | Pending |
+| Job lifecycle persistence | Pending |
+| Audit history persistence | Pending |
+| Configuration backup and checksum | Pending |
+| Automated test suite | Pending |
+| Network-device integration | Pending |
+
+Screenshots should be captured only from real successful runs and stored in `screenshots/`.
+
+## 12. Security Considerations
+
+- Keep credentials outside version-controlled files.
+- Use a database account with only the privileges required by the application.
+- Avoid logging database passwords or device credentials.
+- Treat captured device configurations as potentially sensitive.
+- Verify file permissions and access controls before retaining configuration backups.
+- Exclude virtual environments, cache files, secrets, and unnecessary generated artifacts from Git.
+
+## 13. Limitations and Completion Criteria
+
+The presence of database models and migrations does not alone establish that the complete system works.
+
+Lab 10 can be marked complete only after the database schema, inventory API, persistent jobs, audit history, and configuration backup workflow have been tested together. Reproducible experiment outputs, test results, and concise implementation documentation must also be available.
+
+## 14. Conclusion
+
+Lab 10 establishes the PostgreSQL persistence foundation for the Network Operations API Platform. The remaining work is to complete and validate the application integration, generate real experiment evidence, and document the verified results before publishing the completed lab to GitHub.
