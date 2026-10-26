@@ -3,6 +3,7 @@ from fastapi.responses import JSONResponse
 from pydantic import BaseModel, Field
 from ipaddress import IPv4Address
 from typing import Literal
+from auth_router import router as auth_router
 import uuid
 
 from app.routers.network import router as network_router
@@ -33,6 +34,7 @@ app.include_router(inventory_router)
 app.include_router(operations_router)
 app.include_router(jobs_router)
 app.include_router(audit_router)
+app.include_router(auth_router)
 class ManagementInfo(BaseModel):
     ip_address: IPv4Address
     description: str | None = None
