@@ -5,6 +5,17 @@ from ipaddress import IPv4Address
 from typing import Literal
 from auth_router import router as auth_router
 import uuid
+import sys
+
+LAB14_SRC = (
+    __import__("pathlib").Path(__file__).resolve().parents[2]
+    / "PHASE 2 - PERSISTENCE & ADVANCED NETWORK OPERATIONS"
+    / "LAB 14 - INTEGRATED NETWORK OPERATIONS PLATFORM"
+    / "src"
+)
+sys.path.insert(0, str(LAB14_SRC))
+
+from integration_router import router as integration_router
 
 from app.routers.network import router as network_router
 from app.routers.inventory import router as inventory_router
@@ -35,6 +46,7 @@ app.include_router(operations_router)
 app.include_router(jobs_router)
 app.include_router(audit_router)
 app.include_router(auth_router)
+app.include_router(integration_router)
 class ManagementInfo(BaseModel):
     ip_address: IPv4Address
     description: str | None = None
