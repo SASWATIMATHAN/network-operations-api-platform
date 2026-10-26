@@ -1,0 +1,55 @@
+{
+  "captured_at_utc": "2026-10-26T05:34:46.084255+00:00",
+  "database": "network_operations",
+  "expected_tables": [
+    "network_audit_records",
+    "network_configuration_backups",
+    "network_devices",
+    "network_interfaces",
+    "network_jobs",
+    "network_operation_device_results",
+    "network_operations"
+  ],
+  "available_tables": [
+    "alembic_version",
+    "network_audit_records",
+    "network_configuration_backups",
+    "network_devices",
+    "network_interfaces",
+    "network_jobs",
+    "network_operation_device_results",
+    "network_operations"
+  ],
+  "missing_tables": [],
+  "table_counts": [
+    {
+      "table": "network_audit_records",
+      "row_count": 0
+    },
+    {
+      "table": "network_configuration_backups",
+      "row_count": 1
+    },
+    {
+      "table": "network_devices",
+      "row_count": 1
+    },
+    {
+      "table": "network_interfaces",
+      "row_count": 1
+    },
+    {
+      "table": "network_jobs",
+      "row_count": 0
+    },
+    {
+      "table": "network_operation_device_results",
+      "row_count": 0
+    },
+    {
+      "table": "network_operations",
+      "row_count": 0
+    }
+  ],
+  "status": "passed"
+}

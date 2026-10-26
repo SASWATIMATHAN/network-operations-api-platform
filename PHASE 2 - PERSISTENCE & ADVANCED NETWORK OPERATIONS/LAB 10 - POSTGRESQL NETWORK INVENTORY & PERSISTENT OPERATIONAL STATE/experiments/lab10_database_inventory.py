@@ -7,16 +7,15 @@ import sys
 from datetime import datetime, timezone
 from pathlib import Path
 
-ROOT = Path(__file__).resolve().parents[4]
+ROOT = Path(__file__).resolve().parents[3]
 APP = ROOT / "PHASE 1 - WEB API & NETWORK OPERATIONS"
 LAB = ROOT / "PHASE 2 - PERSISTENCE & ADVANCED NETWORK OPERATIONS" / (
     "LAB 10 - POSTGRESQL NETWORK INVENTORY & PERSISTENT OPERATIONAL STATE"
 )
 sys.path.insert(0, str(APP))
 
-from sqlalchemy import inspect, select, func  # noqa: E402
-from app.database import SessionLocal, engine  # noqa: E402
-from app.models import Base  # noqa: E402
+from sqlalchemy import inspect, text  # noqa: E402
+from app.database import engine  # noqa: E402
 
 EXPECTED_TABLES = {
     "network_devices",
@@ -34,22 +33,24 @@ def main() -> int:
     inspector = inspect(engine)
 
     with engine.connect() as connection:
-        live_tables = set(inspector.get_table_names())
+        live_tables = set(inspect(connection).get_table_names())
         missing = sorted(EXPECTED_TABLES - live_tables)
         rows = []
 
         for table_name in sorted(EXPECTED_TABLES & live_tables):
-            table = Base.metadata.tables.get(table_name)
-            count = (
-                connection.execute(select(func.count()).select_from(table)).scalar_one()
-                if table is not None
-                else None
-            )
-            rows.append({"table": table_name, "row_count": count})
+            count = connection.execute(
+                text(f'SELECT COUNT(*) FROM "{table_name}"')
+            ).scalar_one()
+
+            rows.append({
+                "table": table_name,
+                "row_count": count,
+            })
+
 
     snapshot = {
         "captured_at_utc": timestamp,
-        "database": os.getenv("DB_NAME", "configured database"),
+        "database": engine.url.database or os.getenv("DB_NAME", "configured database"),
         "expected_tables": sorted(EXPECTED_TABLES),
         "available_tables": sorted(live_tables),
         "missing_tables": missing,

@@ -35,22 +35,42 @@ class JobManager:
         self.executor = ThreadPoolExecutor(max_workers=max_workers)
         self._lock = Lock()
 
+
+
     def submit(
         self,
         operation: OperationType,
         targets: list[str],
         requested_by: str,
     ) -> Job:
+        job_id = str(uuid4())
+        operation_id = str(uuid4())
         job = Job(
-            job_id=str(uuid4()),
-            operation_id=str(uuid4()),
+            job_id=job_id,
+            operation_id=operation_id,
         )
+
+        now = datetime.now(timezone.utc)
+        target_list = list(targets)
 
         with SessionLocal.begin() as db:
             db.add(
+                PersistentOperation(
+                    operation_id=operation_id,
+                    operation=operation.value,
+                    status=OperationStatus.QUEUED.value,
+                    requested_by=requested_by,
+                    targets=target_list,
+                    created_at=now,
+                    success_count=0,
+                    failed_count=0,
+                    total_count=len(target_list),
+                )
+            )
+            db.add(
                 PersistentJob(
-                    job_id=job.job_id,
-                    operation_id=None,
+                    job_id=job_id,
+                    operation_id=operation_id,
                     status=job.status.value,
                     created_at=job.created_at,
                 )
@@ -63,7 +83,7 @@ class JobManager:
                 self._run_job,
                 job,
                 operation,
-                list(targets),
+                target_list,
                 requested_by,
             )
         except Exception as exc:
@@ -72,9 +92,19 @@ class JobManager:
             job.completed_at = datetime.now(timezone.utc)
             self.job_store.update(job)
             self._persist_job(job)
+
+            with SessionLocal.begin() as db:
+                operation_row = db.get(PersistentOperation, operation_id)
+                if operation_row is not None:
+                    operation_row.status = OperationStatus.FAILED.value
+                    operation_row.completed_at = job.completed_at
+                    operation_row.error_message = str(exc)
+
             raise
 
         return job
+
+
 
     def get_job(self, job_id: str) -> Job | None:
         cached = self.job_store.get(job_id)
